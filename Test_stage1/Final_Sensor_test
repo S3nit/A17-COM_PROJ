@@ -1,0 +1,37 @@
+#include <ArduinoJson.h>
+#include <Wire.h>
+#include <BME280I2C.h>
+
+BME280I2C bme; 
+#define TdsSensorPin A0
+#define SoilSensorPin A1
+
+void setup() {
+  Serial.begin(9600);
+  Wire.begin();
+  bme.begin();
+}
+
+void loop() {
+  // 1. Gather your data
+  float temp(0), hum(0), pres(0);
+  bme.read(pres, temp, hum, BME280::TempUnit_Celsius, BME280::PresUnit_Pa);
+  int soilMoisture = map(analogRead(SoilSensorPin), 600, 250, 0, 100);
+  
+  // 2. Create the JSON Document
+  // StaticJsonDocument allocates memory on the "Stack" (fast for Mega)
+  StaticJsonDocument<200> doc;
+
+  // 3. Add data to the JSON object
+  doc["sensor"] = "Plant_Station_01";
+  doc["temp"] = serialized(String(temp, 2)); // 2 decimal places
+  doc["humidity"] = serialized(String(hum, 1));
+  doc["soil_moist"] = soilMoisture;
+  doc["tds_ppm"] = analogRead(TdsSensorPin); // Simplified for example
+
+  // 4. Serialize (Convert to a string) and send over Serial
+  serializeJson(doc, Serial);
+  Serial.println(); // New line for the next reading
+
+  delay(5000);
+}
