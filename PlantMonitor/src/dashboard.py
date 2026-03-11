@@ -10,8 +10,7 @@ from datetime import timedelta
 # --- Configuration & UI Setup ---
 st.set_page_config(page_title="Advanced Plant Monitor", layout="wide", page_icon="🌿")
 DATA_PATH = "data/plant_data.csv"
-
-# 🔴 INSERT API KEY HERE 🔴
+
 OWM_API_KEY = "6c1dcad79d77f2bb646d523712c307d3"
 
 plt.style.use('dark_background')
