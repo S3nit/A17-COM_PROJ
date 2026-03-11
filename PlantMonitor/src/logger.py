@@ -14,7 +14,7 @@ class ArduinoDataLogger:
 
         # Added 'Light' to the headers
         if not os.path.isfile(self.path):
-            with open(self.path, 'w', newline='') as f:
+            with open(self.path, 'a', newline='') as f:
                 writer = csv.writer(f)
                 writer.writerow(["Timestamp", "Temp", "Humidity", "Pressure", "Moisture", "TDS", "Light"])
 
