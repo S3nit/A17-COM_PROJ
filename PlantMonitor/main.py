@@ -3,7 +3,7 @@ import time
 
 
 def run():
-    # Update 'COM3' to your Arduino Mega port
+    # Set 'COM12' to current port before running
     logger = ArduinoDataLogger(port='COM12')
     print("System Online. Logging to data/plant_data.csv...")
 
