@@ -62,9 +62,9 @@ st.markdown("""
 # --- Robust API Fetching ---
 @st.cache_data(ttl=900)
 def fetch_local_weather(api_key):
-    if api_key == "YOUR_API_KEY_HERE" or not api_key:
+    if api_key == not api_key:
         return None
-    # Changed HTTP to HTTPS to fix broken images in Streamlit
+  
     url = f"https://api.openweathermap.org/data/2.5/weather?q=Kurunegala,lk&appid={api_key}&units=metric"
     try:
         r = requests.get(url, timeout=5)
