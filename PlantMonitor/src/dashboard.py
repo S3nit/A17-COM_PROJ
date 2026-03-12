@@ -10,7 +10,8 @@ from datetime import timedelta
 # --- Configuration & UI Setup ---
 st.set_page_config(page_title="Advanced Plant Monitor", layout="wide", page_icon="🌿")
 DATA_PATH = "data/plant_data.csv"
-
+
+# 🔴 INSERT API KEY HERE 🔴
 OWM_API_KEY = "6c1dcad79d77f2bb646d523712c307d3"
 
 plt.style.use('dark_background')
@@ -18,8 +19,6 @@ plt.style.use('dark_background')
 st.markdown("""
     <style>
     .metric-card { background-color: #1e1e1e; padding: 15px; border-radius: 10px; margin-bottom: 10px; }
-
-    /* --- NEW: UNIFIED BOX STYLING FOR PERFECT HEIGHT ALIGNMENT --- */
     .dashboard-box {
         border-radius: 20px;
         text-align: center;
@@ -29,7 +28,7 @@ st.markdown("""
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        height: 400px; /* Forces both boxes to be exactly the same height */
+        height: 400px; 
         padding: 20px;
         box-sizing: border-box;
     }
@@ -62,10 +61,9 @@ st.markdown("""
 # --- Robust API Fetching ---
 @st.cache_data(ttl=900)
 def fetch_local_weather(api_key):
-    if api_key == not api_key:
+    if api_key == "YOUR_API_KEY_HERE" or not api_key:
         return None
-  
-    url = f"https://api.openweathermap.org/data/2.5/weather?q=Kurunegala,lk&appid={api_key}&units=metric"
+    url = f"https://api.openweathermap.org/data/2.5/weather?q=Peradeniya,lk&appid={api_key}&units=metric"
     try:
         r = requests.get(url, timeout=5)
         r.raise_for_status()
@@ -101,11 +99,11 @@ def evaluate_plant_health(latest, ranges, weather, pressure_trend):
     if latest['Temp'] < ranges['Temp'][0]:
         stress += 1;
         issues.append("Temp Low 🥶");
-        tips.append("💡 Tip: Relocate away from cold drafts.")
+        tips.append("💡 Tip: Relocate to a warmer, sunnier area.")
     elif latest['Temp'] > ranges['Temp'][1]:
         stress += 1;
         issues.append("Temp High 🥵");
-        tips.append("💡 Tip: Increase air circulation or shade.")
+        tips.append("💡 Tip: Provide temporary shade from extreme afternoon sun.")
 
     if latest['Moisture'] < ranges['Moisture'][0]:
         stress += 2;
@@ -117,7 +115,7 @@ def evaluate_plant_health(latest, ranges, weather, pressure_trend):
     elif latest['Moisture'] > ranges['Moisture'][1]:
         stress += 2;
         issues.append("Oversaturated 🌊");
-        tips.append("💡 Tip: Suspend watering. Verify drainage.")
+        tips.append("💡 Tip: Suspend watering. Ensure pot has adequate drainage.")
 
     if latest['Compensated_TDS'] < ranges['TDS'][0]:
         stress += 1;
@@ -131,17 +129,17 @@ def evaluate_plant_health(latest, ranges, weather, pressure_trend):
     if latest['Light'] < ranges['Light'][0]:
         stress += 1;
         issues.append("Light Low 🌑");
-        tips.append("💡 Tip: Increase exposure or utilize grow lights.")
+        tips.append("💡 Tip: Jasmine requires bright light to flower. Increase exposure.")
     elif latest['Light'] > ranges['Light'][1]:
         stress += 1;
         issues.append("Light High ☀️");
-        tips.append("💡 Tip: Provide indirect shade to prevent scorch.")
+        tips.append("💡 Tip: Extreme UV detected. Provide indirect shade to prevent scorch.")
 
     if pressure_trend < -0.15:
         tips.append("⚠️ Weather Alert: Rapid barometric pressure drop. Storm conditions imminent.")
 
     if stress == 0:
-        return "😁", "face-happy", "bg-happy", "System Optimal", ["💡 Tip: Current environmental parameters are ideal."] + tips
+        return "😁", "face-happy", "bg-happy", "System Optimal", ["💡 Tip: Current tropical environmental parameters are ideal."] + tips
     elif stress == 1:
         return "😐", "face-okay", "bg-okay", f"Sub-optimal: {issues[0]}", tips
     elif stress == 2:
@@ -190,9 +188,15 @@ if os.path.exists(DATA_PATH) and os.path.getsize(DATA_PATH) > 60:
 
             pressure_trend = safe_gradient(recent_window['Pressure'])
 
+            # OPTIMIZED RANGES FOR DWARF PINWHEEL JASMINE (SRI LANKA ADAPTATION)
             ranges = {
-                "Temp": (18, 28), "Humidity": (40, 70), "Pressure": (950, 1050),
-                "Moisture": (300, 700), "TDS": (500, 1500), "VPD": (0.4, 1.2), "Light": (200, 900)
+                "Temp": (22, 32),  # Requires tropical warmth
+                "Humidity": (60, 90),  # Adapted to high humidity/monsoon climates
+                "Pressure": (950, 1050),
+                "Moisture": (350, 750),  # Prefers moist soil; 350 is the new dry threshold
+                "TDS": (600, 1200),  # Moderate feeder
+                "VPD": (0.5, 1.4),  # Wider optimal range due to humidity adaptations
+                "Light": (400, 950)  # Requires bright light for optimal blooming
             }
 
             main_tab1, main_tab2 = st.tabs(["🔴 LIVE DASHBOARD", "📅 LONG-TERM ANALYSIS"])
@@ -209,7 +213,6 @@ if os.path.exists(DATA_PATH) and os.path.getsize(DATA_PATH) > 60:
                                                                                                       pressure_trend)
                     tips_html = "".join([f"<div class='tip-text'>{tip}</div>" for tip in tips_list])
 
-                    # Uses the unified dashboard-box class
                     st.markdown(f"""
                         <div class="dashboard-box mood-box {bg_class}">
                             <div class="{face_class}">{face_emoji}</div>
@@ -225,10 +228,9 @@ if os.path.exists(DATA_PATH) and os.path.getsize(DATA_PATH) > 60:
                         w_hum = weather_data['main']['humidity']
                         icon_code = weather_data['weather'][0]['icon']
 
-                        # Added HTTPS to the image URL to fix the broken image circle
                         st.markdown(f"""
                             <div class="dashboard-box weather-box">
-                                <h3 style="margin:0px 0px 10px 0px; color:#aaa;">📍 Kurunegala Forecast</h3>
+                                <h3 style="margin:0px 0px 10px 0px; color:#aaa;">📍 Peradeniya Forecast</h3>
                                 <img src="https://openweathermap.org/img/wn/{icon_code}@2x.png" width="100">
                                 <h1 style="margin:0px;">{w_temp:.1f}°C</h1>
                                 <p style="font-size:18px; color:#00ffcc; margin:5px 0px;">{w_desc}</p>
@@ -286,15 +288,18 @@ if os.path.exists(DATA_PATH) and os.path.getsize(DATA_PATH) > 60:
 
                 with ins_col1:
                     moisture_drop_rate = safe_gradient(recent_window['Moisture'])
-                    if moisture_drop_rate < -0.1:
-                        points_to_wilt = max(0, latest['Moisture'] - 300)
+                    if moisture_drop_rate < -0.05:
+                        # Updated dry threshold to 350 for the tropical plant
+                        points_to_wilt = max(0, latest['Moisture'] - 350)
                         cycles_left = points_to_wilt / abs(moisture_drop_rate)
                         hours_left = (cycles_left * 2) / 3600
-                        st.metric("Irrigation Prediction", f"Wilt in {hours_left:.1f}h ⏳",
-                                  help="Calculates the immediate mathematical slope of soil moisture depletion to project the estimated time until the absolute dry threshold is reached.")
+                        st.metric("Time Till Next Watering", f"{hours_left:.1f} Hours ⏳",
+                                  delta=f"{moisture_drop_rate:.2f} rate", delta_color="off",
+                                  help="Projects estimated time until the tropical dry threshold (350) is reached based on the current drying rate.")
                     else:
-                        st.metric("Irrigation Prediction", "Stable/Rising 🟢",
-                                  help="Calculates the immediate mathematical slope of soil moisture depletion to project dry-out time. Currently stable.")
+                        st.metric("Time Till Next Watering", "Stable 🟢", delta=f"{moisture_drop_rate:.2f} rate",
+                                  delta_color="off",
+                                  help="Soil moisture is currently stable or rising. The watering countdown is paused.")
 
                 with ins_col2:
                     temp_trend = safe_gradient(recent_window['Temp'])
@@ -307,11 +312,11 @@ if os.path.exists(DATA_PATH) and os.path.getsize(DATA_PATH) > 60:
                                   help="Detects stomatal closure. Triggered when ambient temperature rises rapidly but soil moisture depletion halts.")
 
                 with ins_col3:
-                    if latest['VPD'] < 0.4:
+                    if latest['VPD'] < 0.5:
                         vpd_stat = "Danger: Low Transpiration 🔵"
-                    elif 0.4 <= latest['VPD'] <= 0.8:
+                    elif 0.5 <= latest['VPD'] <= 0.9:
                         vpd_stat = "Ideal: Early Vegetative 🟢"
-                    elif 0.8 < latest['VPD'] <= 1.2:
+                    elif 0.9 < latest['VPD'] <= 1.4:
                         vpd_stat = "Ideal: Late/Flowering 🟢"
                     else:
                         vpd_stat = "Danger: High Stress 🔴"
