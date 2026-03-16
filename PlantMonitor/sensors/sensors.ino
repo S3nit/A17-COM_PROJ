@@ -18,20 +18,17 @@
 #define TFT_SCK  52
 #define TFT_MISO 50
 
-// Initialize Display using Software SPI
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_MOSI, TFT_SCK, TFT_RST, TFT_MISO);
 Adafruit_BME280 bme;
 
-// --- Timing and State Tracking ---
 unsigned long lastUpdate = 0;
 const long updateInterval = 2000;
 unsigned long lastTouchTime = 0;
 
 int lastStressLevel = -1; 
-bool showDataMode = false; // False = Face Mode, True = Data Mode
-bool forceRedraw = true;   // Forces the screen to clear when switching modes
+bool showDataMode = false; 
+bool forceRedraw = true;   
 
-// Global sensor variables so they persist between screen taps
 float temp = 0;
 float hum = 0;
 int moist = 0;
@@ -43,64 +40,51 @@ void setup() {
   Serial.begin(9600);
   Wire.begin();
   
-  // Setup Touch Control Pins
   pinMode(TS_CS, OUTPUT);
-  digitalWrite(TS_CS, HIGH); // Keep touch chip OFF initially
+  digitalWrite(TS_CS, HIGH); 
   pinMode(TS_IRQ, INPUT_PULLUP);
 
-  // Initialize the Screen
   tft.begin();
-  tft.setRotation(0); // Portrait Mode
+  tft.setRotation(0); 
   tft.fillScreen(ILI9341_BLACK);
 
-  // Initialize BME280
   if (!bme.begin(0x76) && !bme.begin(0x77)) {
     Serial.println("Warning: BME280 not found!");
   }
 }
 
-// --- COLOR EVALUATOR FOR JASMINE ---
-// Returns Green for optimal, Yellow for slight warning, Red for danger
 uint16_t evaluateColor(float val, float optLow, float optHigh, float warnLow, float warnHigh) {
   if (val >= optLow && val <= optHigh) return ILI9341_GREEN;
   if (val >= warnLow && val <= warnHigh) return ILI9341_YELLOW;
   return ILI9341_RED;
 }
 
-// --- MINIMALIST FACE DRAWING ---
 void drawPlantFace(int stressLevel) {
-  int centerX = 120; // Exact center of the 240px wide screen
-  int centerY = 160; // Exact center of the 320px tall screen
+  int centerX = 120; 
+  int centerY = 160; 
 
-  // Wipe the face area cleanly
   tft.fillRect(40, 80, 160, 160, ILI9341_BLACK);
 
-  if (stressLevel == 0) { // HAPPY / OPTIMAL
-    // Clean minimalist green theme
+  if (stressLevel == 0) { 
     tft.drawCircle(centerX, centerY, 70, ILI9341_GREEN);          
     tft.fillCircle(centerX - 25, centerY - 15, 3, ILI9341_GREEN); 
     tft.fillCircle(centerX + 25, centerY - 15, 3, ILI9341_GREEN); 
     
-    // Smile (Draw a circle, then erase the top half)
     tft.drawCircle(centerX, centerY + 10, 25, ILI9341_GREEN);
     tft.fillRect(centerX - 30, centerY - 16, 60, 26, ILI9341_BLACK); 
   } 
-  else if (stressLevel == 1) { // NEUTRAL / WARNING
-    // Clean minimalist yellow theme
+  else if (stressLevel == 1) {
     tft.drawCircle(centerX, centerY, 70, ILI9341_YELLOW);
     tft.fillCircle(centerX - 25, centerY - 15, 3, ILI9341_YELLOW);
     tft.fillCircle(centerX + 25, centerY - 15, 3, ILI9341_YELLOW);
     
-    // Flat mouth line
     tft.drawLine(centerX - 15, centerY + 25, centerX + 15, centerY + 25, ILI9341_YELLOW);
   }
-  else { // STRESSED / CRITICAL
-    // Clean minimalist red theme
+  else { 
     tft.drawCircle(centerX, centerY, 70, ILI9341_RED);
     tft.fillCircle(centerX - 25, centerY - 10, 3, ILI9341_RED);
     tft.fillCircle(centerX + 25, centerY - 10, 3, ILI9341_RED);
     
-    // Frown (Draw a circle, then erase the bottom half)
     tft.drawCircle(centerX, centerY + 35, 25, ILI9341_RED);
     tft.fillRect(centerX - 30, centerY + 35, 60, 26, ILI9341_BLACK); 
   }
@@ -109,9 +93,6 @@ void drawPlantFace(int stressLevel) {
 void loop() {
   unsigned long currentMillis = millis();
 
-  // ==========================================
-  // 1. TOUCH TOGGLE LISTENER (With Debounce)
-  // ==========================================
   int rawX, rawY;
   if (readTouch(rawX, rawY)) {
     if (currentMillis - lastTouchTime > 500) { // 500ms debounce
@@ -121,12 +102,8 @@ void loop() {
     }
   }
 
-  // ==========================================
-  // 2. SENSOR UPDATE & SCREEN RENDER
-  // ==========================================
   if (currentMillis - lastUpdate >= updateInterval || forceRedraw) {
-    
-    // Fetch new sensor data every 2 seconds
+ 
     if (currentMillis - lastUpdate >= updateInterval) {
       lastUpdate = currentMillis;
 
@@ -136,26 +113,22 @@ void loop() {
       tds = analogRead(A1);
       light = analogRead(A2);
 
-      // Calculate Stress logic for the Jasmine
       stress = 0;
       if (temp > 32 || temp < 22) stress++;
       if (moist < 350 || moist > 800) stress++; 
 
-      // Send Serial Data to Python Dashboard
       Serial.print(temp); Serial.print(",");
       Serial.print(hum);  Serial.print(",");
-      Serial.print(1013); Serial.print(","); // Mock pressure for brevity
+      Serial.print(1013); Serial.print(","); 
       Serial.print(moist); Serial.print(",");
       Serial.print(tds); Serial.print(",");
       Serial.println(light);
     }
 
-    // WIPE SCREEN IF SWITCHING MODES
     if (forceRedraw) {
       tft.fillScreen(ILI9341_BLACK);
     }
 
-    // --- DRAW DATA MODE ---
     if (showDataMode) {
       tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
       tft.setTextSize(2);
@@ -193,16 +166,15 @@ void loop() {
       tft.setTextColor(ILI9341_DARKGREY, ILI9341_BLACK);
       tft.setCursor(45, 290); tft.print("Tap screen to hide data");
     } 
-    // --- DRAW FACE MODE ---
+  
     else {
-      // Only redraw face if we just switched to this mode, OR if the mood changed
       if (forceRedraw || stress != lastStressLevel) {
         drawPlantFace(stress);
         lastStressLevel = stress;
       }
     }
     
-    forceRedraw = false; // Reset the flag after rendering
+    forceRedraw = false; 
   }
 }
 
