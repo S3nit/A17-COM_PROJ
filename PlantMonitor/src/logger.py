@@ -12,7 +12,6 @@ class ArduinoDataLogger:
 
         self.serial_port = serial.Serial(port, baudrate, timeout=1)
 
-        # Added 'Light' to the headers
         if not os.path.isfile(self.path):
             with open(self.path, 'w', newline='') as f:
                 writer = csv.writer(f)
